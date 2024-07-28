@@ -7,9 +7,9 @@ Vue.use(Vuex);
 
 const createStore = () => {
   return new Vuex.Store({
-    state: {
+    state: () => ({
       isLoggedIn: !!localStorage.getItem('authToken')
-    },
+    }),
     mutations: {
       setLoginState(state, isLoggedIn) {
         state.isLoggedIn = isLoggedIn;
