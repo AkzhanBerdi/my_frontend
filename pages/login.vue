@@ -4,7 +4,7 @@
     <form @submit.prevent="login">
       <input type="text" v-model="username" placeholder="Username" required />
       <input type="password" v-model="password" placeholder="Password" required />
-      <button type="submit">Login</button>
+      <button type="submit" :disabled="isLoading">{{ isLoading ? 'Logging in...' : 'Login' }}</button>
     </form>
   </div>
 </template>
@@ -14,11 +14,13 @@ export default {
   data() {
     return {
       username: '',
-      password: ''
+      password: '',
+      isLoading: false
     };
   },
   methods: {
     async login() {
+      this.isLoading = true;
       try {
         const credentials = {
           username: this.username,
@@ -27,12 +29,19 @@ export default {
         await this.$store.dispatch('login', credentials);
         this.$router.push('/');
       } catch (error) {
-        console.error('Login error:', error.response.data);
+        console.error('Login error:', error);
+        alert('Login failed. Please check your credentials.');
+      } finally {
+        this.isLoading = false;
       }
     }
   }
 }
 </script>
+
+<style scoped>
+/* Your existing styles */
+</style>
 
 <style scoped>
 .login-container {

@@ -6,53 +6,102 @@ Vue.use(Vuex);
 const createStore = () => {
   return new Vuex.Store({
     state: () => ({
-      isLoggedIn: !!localStorage.getItem('authToken'),
-      csrfToken: null
+      isLoggedIn: false,
+      csrfToken: null,
+      user: null,
+      token: null
     }),
+    getters: {
+      isLoggedIn: state => !!state.token
+    },
     mutations: {
       setLoginState(state, isLoggedIn) {
         state.isLoggedIn = isLoggedIn;
       },
       SET_CSRF_TOKEN(state, token) {
         state.csrfToken = token;
+      },
+      SET_USER(state, user) {
+        state.user = user;
+      },
+      SET_TOKEN(state, token) {
+        state.token = token;
+        localStorage.setItem('token', token);
+      },
+      CLEAR_TOKEN(state) {
+        state.token = null;
+        localStorage.removeItem('token');
       }
     },
     actions: {
-      async nuxtServerInit({ commit }, { $axios }) {
+      async nuxtServerInit({ commit, dispatch }) {
         try {
-          const response = await $axios.get('/api/users/csrf-token/');
+          const response = await this.$axios.get('/api/users/csrf-token/');
           commit('SET_CSRF_TOKEN', response.data.csrfToken);
+          const token = localStorage.getItem('token');
+          if (token) {
+            commit('SET_TOKEN', token);
+            await dispatch('checkAuth');
+          }
         } catch (error) {
           console.error('Error fetching CSRF token:', error);
         }
       },
-      async login({ commit }, credentials) {
+      async checkAuth({ commit, state }) {
+        if (!state.token) return;
         try {
-          const response = await this.$axios.post('http://localhost:8000/api/users/login/', credentials);
-          localStorage.setItem('authToken', response.data.token);
+          const response = await this.$axios.get('/api/users/me/', {
+            headers: {
+              'Authorization': `Token ${state.token}`
+            }
+          });
+          commit('SET_USER', response.data);
           commit('setLoginState', true);
         } catch (error) {
-          console.error('Login error:', error.response.data);
+          commit('SET_USER', null);
+          commit('setLoginState', false);
+          commit('CLEAR_TOKEN');
+        }
+      },
+      async login({ commit }, credentials) {
+        try {
+          const response = await this.$axios.post('/api/users/login/', credentials);
+          commit('SET_TOKEN', response.data.token);
+          commit('setLoginState', true);
+          await this.dispatch('checkAuth');
+          return response;
+        } catch (error) {
+          console.error('Login error:', error.response?.data);
           throw error;
         }
       },
       async logout({ commit }) {
         try {
-          await this.$axios.post('http://localhost:8000/api/users/logout/');
-          localStorage.removeItem('authToken');
-          commit('setLoginState', false);
+          await this.$axios.post('/api/users/logout/');
         } catch (error) {
-          console.error('Logout error:', error.response.data);
+          console.error('Logout error:', error);
+        } finally {
+          commit('CLEAR_TOKEN');
+          commit('SET_USER', null);
+          commit('setLoginState', false);
+        }
+      },
+      async register(_, userData) {
+        try {
+          await this.$axios.post('/api/users/register/', userData);
+        } catch (error) {
+          console.error('Registration error:', error.response?.data);
           throw error;
         }
       },
       async initiateCall({ state }, phoneNumber) {
         try {
           const response = await this.$axios.post('/api/demo/initiate-call/', 
-            { phone_number: phoneNumber },
+            { to_number: phoneNumber },  // Make sure this matches your backend expectation
             {
               headers: {
-                'X-CSRFToken': state.csrfToken
+                'X-CSRFToken': state.csrfToken,
+                'Authorization': `Token ${state.token}`
               }
             }
           );

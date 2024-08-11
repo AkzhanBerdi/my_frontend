@@ -1,8 +1,15 @@
-export default function ({ $axios, store }) {
-    $axios.onRequest(config => {
-      const token = store.state.csrfToken
-      if (token) {
-        config.headers.common['X-CSRFToken'] = token
-      }
-    })
-  }
+export default function ({ $axios, redirect }) {
+  $axios.onRequest(config => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.common['Authorization'] = `Token ${token}`
+    }
+  })
+
+  $axios.onError(error => {
+    if (error.response.status === 401) {
+      localStorage.removeItem('token')
+      redirect('/login')
+    }
+  })
+}

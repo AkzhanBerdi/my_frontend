@@ -4,7 +4,8 @@
     <form @submit.prevent="register">
       <input v-model="username" placeholder="Username" required />
       <input v-model="password" type="password" placeholder="Password" required />
-      <button type="submit">Register</button>
+      <input v-model="confirmPassword" type="password" placeholder="Confirm Password" required />
+      <button type="submit" :disabled="isLoading">{{ isLoading ? 'Registering...' : 'Register' }}</button>
     </form>
   </div>
 </template>
@@ -14,20 +15,30 @@ export default {
   data() {
     return {
       username: '',
-      password: ''
+      password: '',
+      confirmPassword: '',
+      isLoading: false
     }
   },
   methods: {
     async register() {
+      if (this.password !== this.confirmPassword) {
+        alert("Passwords don't match");
+        return;
+      }
+      this.isLoading = true;
       try {
-        await this.$axios.post('register/', {
+        await this.$store.dispatch('register', {
           username: this.username,
           password: this.password
         });
+        alert('Registration successful. Please login.');
         this.$router.push('/login');
       } catch (error) {
-        console.error('Registration error:', error.response ? error.response.data : error.message);
-        // Optionally, display an error message to the user
+        console.error('Registration error:', error);
+        alert('Registration failed. Please try again.');
+      } finally {
+        this.isLoading = false;
       }
     }
   }

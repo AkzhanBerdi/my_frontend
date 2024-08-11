@@ -57,4 +57,28 @@ export default {
   proxy: {
     '/api/': 'http://localhost:8000'
   },
+  router: {
+    extendRoutes(routes, resolve) {
+      routes.push({
+        name: 'home',
+        path: '/',
+        component: resolve(__dirname, 'pages/index.vue')
+      })
+      routes.push({
+        name: 'login',
+        path: '/login',
+        component: resolve(__dirname, 'pages/login.vue')
+      })
+      routes.push({
+        name: 'register',
+        path: '/register',
+        component: resolve(__dirname, 'pages/register.vue')
+      })
+      routes.push({
+        name: 'logout',
+        path: '/logout',
+        component: resolve(__dirname, 'pages/logout.vue')
+      })
+    }
+  }
 }

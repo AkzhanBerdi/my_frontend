@@ -3,18 +3,18 @@
     <nav class="sidebar">
       <h1>Welcome to Call2Action</h1>
       <ul>
-        <li v-if="!isLoggedIn">
-          <button @click="goToLogin">Login</button>
+        <li v-if="!$store.getters.isLoggedIn">
+          <button @click="$router.push('/login')">Login</button>
         </li>
-        <li v-if="!isLoggedIn">
-          <button @click="goToRegister">Sign-Up</button>
+        <li v-if="!$store.getters.isLoggedIn">
+          <button @click="$router.push('/register')">Sign-Up</button>
         </li>
-        <li v-if="isLoggedIn">
+        <li v-if="$store.getters.isLoggedIn">
           <button @click="logout">Logout</button>
         </li>
       </ul>
     </nav>
-    <div class="content" v-if="isLoggedIn">
+    <div class="content" v-if="$store.getters.isLoggedIn">
       <h2>Initiate a Call</h2>
       <form @submit.prevent="submitForm">
         <input v-model="phoneNumber" placeholder="Enter phone number" required />
@@ -34,43 +34,36 @@ export default {
       isLoading: false,
     };
   },
-  computed: {
-    isLoggedIn() {
-      return this.$store.state.isLoggedIn;
-    },
-  },
   methods: {
     async submitForm() {
-    try {
-      await this.$store.dispatch('initiateCall', this.phoneNumber);
-      alert('Call initiated successfully');
-    } catch (error) {
-      alert('Failed to initiate call. Please try again.');
-    }
-  }
-},
-    async fetchCsrfToken() {
+      if (!this.phoneNumber) {
+        alert('Please enter a phone number');
+        return;
+      }
+
+      this.isLoading = true;
       try {
-        const response = await this.$axios.get('/api/users/csrf-token/');
-        return response.data.csrfToken;
+        console.log('Initiating call to:', this.phoneNumber); // Debug log
+        await this.$store.dispatch('initiateCall', this.phoneNumber);
+        alert('Call initiated successfully');
       } catch (error) {
-        console.error('Error fetching CSRF token:', error);
-        throw error;
+        console.error('Call initiation error:', error);
+        alert('Failed to initiate call. Please try again.');
+      } finally {
+        this.isLoading = false;
       }
     },
-    goToRegister() {
-      this.$router.push('/register');
-    },
-    goToLogin() {
-      this.$router.push('/login');
-    },
-    logout() {
-      this.$store.dispatch('logout').then(() => {
-        this.$router.push('/');
-      });
+    async logout() {
+      try {
+        await this.$store.dispatch('logout');
+        this.$router.push('/login');
+      } catch (error) {
+        console.error('Logout error:', error);
+        alert('Logout failed. Please try again.');
+      }
     }
   }
-
+}
 </script>
 
 <style scoped>
@@ -109,6 +102,8 @@ export default {
   border-radius: 5px;
   cursor: pointer;
   width: 100%;
+  position: relative;
+  z-index: 10;
 }
 
 .sidebar button:hover {
