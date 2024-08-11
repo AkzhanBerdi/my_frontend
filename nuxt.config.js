@@ -1,4 +1,8 @@
 export default {
+  server: {
+    port: 3300 // Choose the port you want to use
+  },
+
   // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
   ssr: false,
 
@@ -26,7 +30,8 @@ export default {
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
-    '@/plugins/antd-ui'
+    '@/plugins/antd-ui',
+    '~/plugins/axios'
   ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
@@ -41,12 +46,15 @@ export default {
     '@nuxtjs/axios'
   ],
   axios: {
-    baseURL: 'http://localhost:8000/api/users/', // Django API base URL
+    baseURL: 'http://localhost:8000', // Django API base URL
   },
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
   },
   render: {
     resourceHints: false,
+  },
+  proxy: {
+    '/api/': 'http://localhost:8000'
   },
 }
