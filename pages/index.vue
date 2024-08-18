@@ -10,6 +10,9 @@
           <button @click="$router.push('/register')">Sign-Up</button>
         </li>
         <li v-if="$store.getters.isLoggedIn">
+          <button @click="showAgentCreationForm">Create New Agent</button>
+        </li>
+        <li v-if="$store.getters.isLoggedIn">
           <button @click="logout">Logout</button>
         </li>
       </ul>
@@ -23,15 +26,25 @@
         </button>
       </form>
     </div>
+    <AgentCreationModal 
+      v-if="isAgentCreationFormVisible" 
+      @close="hideAgentCreationForm"
+    />
   </div>
 </template>
 
 <script>
+import AgentCreationModal from '../components/AgentCreationModal.vue';
+
 export default {
+  components: {
+    AgentCreationModal
+  },
   data() {
     return {
       phoneNumber: '',
       isLoading: false,
+      isAgentCreationFormVisible: false
     };
   },
   methods: {
@@ -61,12 +74,19 @@ export default {
         console.error('Logout error:', error);
         alert('Logout failed. Please try again.');
       }
+    },
+    showAgentCreationForm() {
+      this.isAgentCreationFormVisible = true;
+    },
+    hideAgentCreationForm() {
+      this.isAgentCreationFormVisible = false;
     }
   }
 }
 </script>
 
 <style scoped>
+/* Keep your existing styles */
 .main-container {
   display: flex;
   height: 100vh;
